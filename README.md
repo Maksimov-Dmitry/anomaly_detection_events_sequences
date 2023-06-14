@@ -54,4 +54,15 @@ Project Organization
 
 --------
 
-<p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
+### GitLab Flow
+
+- If not familiar please read this [intro to GitLab Flow](https://docs.gitlab.com/ee/topics/gitlab_flow.html)
+Specifically the sections ***Merge/pull requests with GitLab flow***, ***Issue tracking with GitLab flow*** and ***Linking and closing issues from merge requests***
+
+### Coding style docs
+
+- [PEP8](https://www.python.org/dev/peps/pep-0008/) guidelines are followed
+- Documentation is provided. New functions and classes should have numpy/scipy style [docstrings](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard)
+- [PEP 484](https://www.python.org/dev/peps/pep-0484/) we use type hinting in addition to docstrings 
+- TBD: use [yapf](https://github.com/google/yapf) or [Flake8](https://pypi.org/project/flake8/) for automatic style checking; yapf seems very neet and more powerful
+- TBD: use [sphinx](https://www.sphinx-doc.org/en/master/)
