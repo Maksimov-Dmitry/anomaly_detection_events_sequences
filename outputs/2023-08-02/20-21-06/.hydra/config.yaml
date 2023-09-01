@@ -1,0 +1,7 @@
+model_path: models/NSMMPP-epoch=02-val_loss=639.ckpt
+process: pois
+ps:
+- 0.1
+- pc
+- sin
+target: 1

@@ -1,0 +1,8 @@
+dataset: data/raw/pois/train.pkl
+nhid: 1024
+lr: 0.001
+epochs: 500
+sample_multiplier: 10
+target: 1
+label_size: 3
+train_size: 0.8

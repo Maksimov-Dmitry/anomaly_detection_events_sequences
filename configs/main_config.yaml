@@ -1,0 +1,11 @@
+n_persons: 30
+n_train: 10
+n_test: 10
+nhid: 1024
+context_intensity_pois_min:
+  - 0.02
+  - 0.1
+context_intensity_pois_factors:
+  - 10
+  - 10
+non_regulator_outliers_prob: 0.1
