@@ -7,6 +7,26 @@ from omegaconf import DictConfig
 from src.entities.dataset_params import read_dataset_params, DatasetParams
 import os
 import pickle
+from collections import defaultdict
+
+
+def split_train_val(data, train_size):
+    # Step 1: Group the dictionaries by the 'id' key
+    grouped_data = defaultdict(list)
+    for d in data:
+        grouped_data[d['id']].append(d)
+
+    train_data = []
+    val_data = []
+
+    for _, id_group in grouped_data.items():
+        n = len(id_group)
+        n_train = int(n * train_size)
+
+        train_data.extend(id_group[:n_train])  # Training set
+        val_data.extend(id_group[n_train:])    # Validation set
+
+    return train_data, val_data
 
 
 def merge(a, b, idx=None):
@@ -226,7 +246,7 @@ class OmissSim:
             rate = self.rate_omiss * self.regulator(vt_event)
         trials = np.random.binomial(1, rate, n)
         # always keep the event at t_min
-        if vt_event[0] == t_min:
+        if len(vt_event) > 0 and vt_event[0] == t_min:
             trials[0] = 0
         idx_omiss = np.nonzero(trials)
         vt_omiss = vt_event[idx_omiss]
@@ -410,7 +430,6 @@ def plot_events(seq):
 def create_dataset(dataset_params: DatasetParams):
     folder = f'data/raw/{dataset_params.process}'
     os.makedirs(folder, exist_ok=True)
-    np.random.seed(dataset_params.seed)
     Q = np.array([
         [-0.05, 0.05],
         [0.05, -0.05]
@@ -420,6 +439,7 @@ def create_dataset(dataset_params: DatasetParams):
     params = []
     if dataset_params.process == 'pois':
         for i in range(dataset_params.n_persons):
+            np.random.seed(dataset_params.seed * dataset_params.n_persons + i)
             param = np.random.uniform(dataset_params.context_intensity_pois_min,
                                       np.array(dataset_params.context_intensity_pois_min) * np.array(dataset_params.context_intensity_pois_factors),
                                       len(dataset_params.context_intensity_pois_min))

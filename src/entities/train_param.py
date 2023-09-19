@@ -13,6 +13,9 @@ class TrainParams:
     target: int
     label_size: int
     train_size: float
+    use_personalisation: bool
+    n_persons: int
+    use_context: bool
 
 
 DatasetParamsSchema = class_schema(TrainParams)

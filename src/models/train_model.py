@@ -7,18 +7,17 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 import pytorch_lightning as pl
 from src.models.model_manager import ModelManager
+from src.data.make_dataset import split_train_val
+from aim.pytorch_lightning import AimLogger
 
 
 def train(params: TrainParams):
     with open(params.dataset, 'rb') as f:
         data_train = pickle.load(f)
+    train, val = split_train_val(data_train, params.train_size)
 
-    n_train = int(len(data_train) * params.train_size)
-    train = data_train[:n_train]
-    val = data_train[n_train:]
-
-    train_gen = get_cppod_dataloader(train, params.target, params.sample_multiplier)
-    val_gen = get_cppod_dataloader(val, params.target, params.sample_multiplier)
+    train_gen = get_cppod_dataloader(train, params.target, params.sample_multiplier, params.use_context)
+    val_gen = get_cppod_dataloader(val, params.target, params.sample_multiplier, params.use_context)
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
         mode='min',
@@ -29,9 +28,10 @@ def train(params: TrainParams):
         save_last=False,
     )
     early_stopping = EarlyStopping(monitor="val_loss", mode="min", patience=2)
-    model = ModelManager(params.lr, params.label_size, params.nhid, params.target)
-    trainer = pl.Trainer(max_epochs=params.epochs, accelerator="cpu", devices=1, callbacks=[checkpoint_callback, early_stopping],
-                         log_every_n_steps=1, logger=False)
+    number_of_persons = params.n_persons if params.use_personalisation else None
+    model = ModelManager(params.lr, params.label_size, params.nhid, params.target, number_of_persons)
+    trainer = pl.Trainer(max_time={"minutes": 15}, max_epochs=params.epochs, accelerator="cpu", devices=1, callbacks=[checkpoint_callback, early_stopping],
+                         log_every_n_steps=int(len(train_gen) / params.n_persons), logger=None)
     trainer.fit(model, train_dataloaders=train_gen, val_dataloaders=val_gen)
 
 

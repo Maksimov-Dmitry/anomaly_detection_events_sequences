@@ -1,8 +1,0 @@
-model_path: models/model.ckpt
-process: pois
-ps:
-- 0.1
-target: 1
-label_size: 3
-nhid: 1024
-lr: 0.001

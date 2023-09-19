@@ -1,8 +1,11 @@
 dataset: data/raw/pois/train.pkl
+use_context: true
 nhid: 512
 lr: 0.001
-epochs: 500
+epochs: 15
 sample_multiplier: 10
 target: 1
 label_size: 3
 train_size: 0.8
+use_personalisation: true
+n_persons: 3

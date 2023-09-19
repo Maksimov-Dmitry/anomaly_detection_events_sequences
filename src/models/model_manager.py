@@ -7,9 +7,9 @@ from tqdm import tqdm
 
 
 class ModelManager(pl.LightningModule):
-    def __init__(self, lr: float, label_size: int, hidden_size: int, target: int):
+    def __init__(self, lr: float, label_size: int, hidden_size: int, target: int, number_of_persons=None):
         super(ModelManager, self).__init__()
-        self.model = NSMMPP(label_size, hidden_size, target)
+        self.model = NSMMPP(label_size, hidden_size, target, number_of_persons)
         self.lr = lr
         self.sim_time_diffs = None
         self.dt = 1
@@ -24,6 +24,7 @@ class ModelManager(pl.LightningModule):
             seq['time_seq'],
             seq['sim_time_seq'],
             seq['sim_time_idx'],
+            seq['id']
         )
         self.log(metric, loss, on_epoch=True, on_step=metric == 'train_loss', prog_bar=True, batch_size=1)
         return loss
@@ -46,6 +47,7 @@ class ModelManager(pl.LightningModule):
                     item['sim_time_idx'],
                     item['sim_time_diffs'],
                     item['time_test'],
+                    item['id'],
                 )
             else:
                 score_omiss, score_commiss, _, _ = self.model.detect_outlier(
@@ -55,7 +57,8 @@ class ModelManager(pl.LightningModule):
                     item['sim_time_idx'],
                     item['sim_time_diffs'],
                     item['time_test'],
-                    n_sample=1000
+                    item['id'],
+                    n_sample=1000,
                 )
             df = pd.DataFrame(OrderedDict({
                 'seq': seq_idx,
@@ -73,5 +76,5 @@ class ModelManager(pl.LightningModule):
         return results
 
     def configure_optimizers(self):
-        opt = torch.optim.Adam(self.parameters(), lr=self.lr)
+        opt = torch.optim.AdamW(self.parameters(), lr=self.lr)
         return [opt], []

@@ -6,13 +6,18 @@ from typing import List
 
 @dataclass()
 class MainParams:
+    seed: int
     n_persons: int
     n_train: int
     n_test: int
+    t_max: int
+    dt: float
     nhid: int
     context_intensity_pois_min: List[float]
     context_intensity_pois_factors: List[int]
     non_regulator_outliers_prob: float
+    use_personalisation: bool
+    use_context: bool
 
 
 MainParamsSchema = class_schema(MainParams)
