@@ -1,7 +1,7 @@
-fau_anomaly_detection
+personalized anomaly detection
 ==============================
 
-Personalized Real-Time Anomaly Detection on Event Sequences
+A short description of the project.
 
 Project Organization
 ------------
