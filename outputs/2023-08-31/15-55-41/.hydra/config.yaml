@@ -1,8 +1,0 @@
-model_path: models/NSMMPP-epoch=13-val_loss=706.ckpt
-process: pois
-ps:
-- 0.1
-target: 1
-label_size: 3
-nhid: 512
-lr: 0.001

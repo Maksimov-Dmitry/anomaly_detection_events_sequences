@@ -13,3 +13,5 @@ tqdm==4.65.0
 statsmodels==0.14.0
 scikit-learn==1.3.0
 aim==3.17.5
+plotly==5.16.1
+nbformat==5.9.2

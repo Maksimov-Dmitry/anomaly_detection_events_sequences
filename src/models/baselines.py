@@ -5,6 +5,7 @@ from collections import OrderedDict
 from statsmodels.distributions.empirical_distribution import ECDF
 import pickle
 import os
+import argparse
 
 
 def detect_rand(test_set):
@@ -28,10 +29,11 @@ def fit_len(train_set):
     lens = []
     for seq in train_set:
         vt = seq['time_target']
-        t_min = seq['start']
-        if vt[0] != t_min:
-            vt = np.insert(vt, 0, t_min)
-        lens.extend(np.diff(vt))
+        if len(vt) > 0:
+            t_min = seq['start']
+            if vt[0] != t_min:
+                vt = np.insert(vt, 0, t_min)
+            lens.extend(np.diff(vt))
     return ECDF(lens)
 
 
@@ -203,12 +205,11 @@ def fit_model_gam(train_set, n_mode):
     return param
 
 
-def detect(name, method, test_set, result_path):
+def detect(name, method, test_set, result_path, p):
     for outlier in outliers:
-        for p in ps:
-            np.random.seed(0)
-            result = method(test_set[outlier][p])
-            result.to_csv(f'{result_path}/{outlier}/{name}_{p}.csv')
+        np.random.seed(0)
+        result = method(test_set[outlier][p])
+        result.to_csv(f'{result_path}/{outlier}/{name}_{p}.csv')
 
 
 def detect_with_param(method, param):
@@ -218,7 +219,9 @@ def detect_with_param(method, param):
 if __name__ == '__main__':
     datasets = ['pois']
     outliers = ['commiss', 'omiss']
-    ps = ["0.1"]
+    parser = argparse.ArgumentParser(description='Your script description.')
+    parser.add_argument('--p', type=str, default="0.1", help='Value for p. Default is "0.1".')
+    args = parser.parse_args()
 
     for dataset in datasets:
         folder = f'data/raw/{dataset}'
@@ -230,14 +233,14 @@ if __name__ == '__main__':
         for outlier in outliers:
             test_set[outlier] = {}
             os.makedirs(f'{result_path}/{outlier}', exist_ok=True)
-            for p in ps:
-                with open(f'{folder}/test_{outlier}_{p}.pkl', 'rb') as f:
-                    test_set[outlier][p] = pickle.load(f)
+            with open(f'{folder}/test_{outlier}_{args.p}.pkl', 'rb') as f:
+                test_set[outlier][args.p] = pickle.load(f)
 
-        detect('rand', detect_rand, test_set, result_path)
+        detect('rand', detect_rand, test_set, result_path, args.p)
 
         param = fit_len(train_set)
-        detect('len', detect_with_param(detect_len, param), test_set, result_path)
+        detect('len', detect_with_param(detect_len, param), test_set, result_path, args.p)
+
 
         K = 2
         if dataset == 'pois':
@@ -245,12 +248,12 @@ if __name__ == '__main__':
             # detect('model', detect_with_param(detect_model_pois, param), test_set, result_path)
             with open(f'{folder}/param.pkl', 'rb') as f:
                 param = pickle.load(f)
-            detect('true', detect_with_param(detect_model_pois, param), test_set, result_path)
+            detect('true', detect_with_param(detect_model_pois, param), test_set, result_path, args.p)
         elif dataset == 'gam':
             # param = fit_model_gam(train_set, K)
             # detect('model', detect_with_param(detect_model_gam, param), test_set, result_path)
             with open(f'{folder}/param.pkl', 'rb') as f:
                 param = pickle.load(f)
-            detect('true', detect_with_param(detect_model_gam, param), test_set, result_path)
+            detect('true', detect_with_param(detect_model_gam, param), test_set, result_path, args.p)
         elif test_set.get('lambda_x') is not None:
-            detect('true', detect_model_true, test_set, result_path)
+            detect('true', detect_model_true, test_set, result_path, args.p)

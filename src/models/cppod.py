@@ -4,7 +4,7 @@ import math
 
 
 class NSMMPP(nn.Module):
-    def __init__(self, label_size: int, hidden_size: int, target: int):
+    def __init__(self, label_size: int, hidden_size: int, target: int, number_of_persons):
         super(NSMMPP, self).__init__()
         self.target = target
         self.sigmoid = nn.Sigmoid()
@@ -15,6 +15,8 @@ class NSMMPP(nn.Module):
         self.num_eq = 7
         # add a special event label for initialization
         self.Emb = nn.Parameter(self.init_weight(torch.empty(hidden_size, label_size + 1)))
+        if number_of_persons is not None:
+            self.EmbPersonalised = nn.Parameter(self.init_weight(torch.empty(hidden_size, number_of_persons)))
         self.W = nn.Parameter(self.init_weight(torch.empty(self.num_eq, hidden_size, hidden_size)))
         self.U = nn.Parameter(self.init_weight(torch.empty(self.num_eq, hidden_size, hidden_size)))
         self.d = nn.Parameter(torch.zeros(self.num_eq, hidden_size))
@@ -64,7 +66,7 @@ class NSMMPP(nn.Module):
 
     # compute NLL loss given a label_seq and a time_seq
     # sim_time_seq is simlulated times for computing integral
-    def loglik(self, label_seq, time_seq, sim_time_seq, sim_time_idx):
+    def loglik(self, label_seq, time_seq, sim_time_seq, sim_time_idx, seq_id):
         n = len(time_seq)
         # collect states right after each event
         # last event is EOS marker
@@ -75,7 +77,10 @@ class NSMMPP(nn.Module):
         all_h_t = torch.zeros_like(all_c)
         hidden = self.init_hidden()
         # BOS event is 0 at time 0
-        label_prev = self.Emb[:, label_seq[0]].squeeze()
+        if hasattr(self, 'EmbPersonalised'):
+            label_prev = self.EmbPersonalised[:, seq_id].squeeze()
+        else:
+            label_prev = self.Emb[:, label_seq[0]].squeeze()
         t_prev = time_seq[0]
         for i in range(1, n):
             label = self.Emb[:, label_seq[i]].squeeze()
@@ -103,13 +108,13 @@ class NSMMPP(nn.Module):
 
         return -loglik, all_c, all_c_, all_delta, all_o, all_h_t, h_sim
 
-    def forward(self, label_seq, time_seq, sim_time_seq, sim_time_idx):
-        result = self.loglik(label_seq, time_seq, sim_time_seq, sim_time_idx)
+    def forward(self, label_seq, time_seq, sim_time_seq, sim_time_idx, seq_id):
+        result = self.loglik(label_seq, time_seq, sim_time_seq, sim_time_idx, seq_id)
         return result[0].sum()
 
-    def detect_outlier(self, label_seq, time_seq, sim_time_seq, sim_time_idx, sim_time_diffs, time_test, n_sample):
+    def detect_outlier(self, label_seq, time_seq, sim_time_seq, sim_time_idx, sim_time_diffs, time_test, id, n_sample):
         with torch.no_grad():
-            _, all_c, all_c_, all_delta, all_o, all_h_t, h_sim = self.loglik(label_seq, time_seq, sim_time_seq, sim_time_idx)
+            _, all_c, all_c_, all_delta, all_o, all_h_t, h_sim = self.loglik(label_seq, time_seq, sim_time_seq, sim_time_idx, id)
             n = len(time_test)
             m = len(time_seq)
             score = torch.zeros(n - 1)
@@ -147,9 +152,9 @@ class NSMMPP(nn.Module):
             lambd_sim = self.h_to_lambd(h_sim)
             return score, -score, lambd, lambd_sim
 
-    def detect_outlier_instant(self, label_seq, time_seq, sim_time_seq, sim_time_idx, sim_time_diffs, time_test):
+    def detect_outlier_instant(self, label_seq, time_seq, sim_time_seq, sim_time_idx, sim_time_diffs, time_test, id):
         with torch.no_grad():
-            _, all_c, all_c_, all_delta, all_o, all_h_t, h_sim = self.loglik(label_seq, time_seq, sim_time_seq, sim_time_idx)
+            _, all_c, all_c_, all_delta, all_o, all_h_t, h_sim = self.loglik(label_seq, time_seq, sim_time_seq, sim_time_idx, id)
             n = len(time_test)
             m = len(time_seq)
             score = torch.zeros(n - 1)

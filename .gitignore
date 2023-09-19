@@ -76,7 +76,7 @@ target/
 .ipynb_checkpoints/
 
 # exclude data from source control by default
-/data/
+*.pkl
 
 # Mac OS-specific storage files
 .DS_Store
@@ -88,3 +88,9 @@ target/
 # Mypy cache
 .mypy_cache/
 *.ckpt
+.aim
+.venv
+multirun
+results/pois
+lightning_logs
+outputs

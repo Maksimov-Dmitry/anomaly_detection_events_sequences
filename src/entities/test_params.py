@@ -7,11 +7,14 @@ from omegaconf import DictConfig
 class TestParams:
     model_path: str
     process: str
-    ps: list
+    p: float
     target: int
     label_size: int
     nhid: int
     lr: float
+    use_personalisation: bool
+    n_persons: int
+    use_context: bool
 
 
 DatasetParamsSchema = class_schema(TestParams)

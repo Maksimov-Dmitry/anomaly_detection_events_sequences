@@ -6,28 +6,42 @@ import subprocess
 import os
 from aim import Run, Image
 from src.metrics.calculate_metrics import get_metrics
+import pickle
+from src.visualization.visualize import plot_data
+
+
+def get_data_plot():
+    with open('data/raw/pois/train.pkl', 'rb') as f:
+        data_train = pickle.load(f)
+        fig = plot_data(data_train[0])
+        return fig
 
 
 def main(params: MainParams):
-    run = Run()
+    run = Run(experiment='main')
+    run.add_tag('num-of-sequences-and-seed')
     run['hparams'] = asdict(params)
     create_dataset_command = "python -m src.data.make_dataset "
     for key, value in asdict(params).items():
-        if key == 'nhid':
+        if key in ('nhid', 'use_personalisation', 'use_context'):
             continue
         if isinstance(value, list):
             value = f"[{','.join(map(str, value))}]"
         create_dataset_command += f"{key}={value} "
     subprocess.run(create_dataset_command, shell=True, check=True, executable="/bin/bash")
-    subprocess.run("python src/models/baselines.py", shell=True, check=True, executable="/bin/bash")
+    subprocess.run(f"python src/models/baselines.py --p {params.non_regulator_outliers_prob}", shell=True, check=True, executable="/bin/bash")
     filelist = [f for f in os.listdir("models") if f.endswith(".ckpt")]
     for f in filelist:
         os.remove(os.path.join("models", f))
-    subprocess.run(f"python -m src.models.train_model nhid={params.nhid}", shell=True, check=True, executable="/bin/bash")
+    fig = get_data_plot()
+    run.track(Image(fig), name='initial_data')
+    subprocess.run(f"python -m src.models.train_model nhid={params.nhid} use_personalisation={params.use_personalisation} n_persons={params.n_persons} use_context={params.use_context}",
+                    shell=True, check=True, executable="/bin/bash")
     model = [f for f in os.listdir("models") if f.endswith(".ckpt")][0]
     os.rename(f'models/{model}', 'models/model.ckpt')
-    subprocess.run(f"python -m src.models.predict_model model_path=models/model.ckpt nhid={params.nhid}", shell=True, check=True, executable="/bin/bash")
-    figures, results = get_metrics()
+    subprocess.run(f"python -m src.models.predict_model model_path=models/model.ckpt nhid={params.nhid} use_personalisation={params.use_personalisation} n_persons={params.n_persons} use_context={params.use_context} p={params.non_regulator_outliers_prob}",
+                    shell=True, check=True, executable="/bin/bash")
+    figures, results = get_metrics(params.non_regulator_outliers_prob)
     for fig, _, outlier in figures:
         run.track(Image(fig), name='roc_curve', context={'outliers': outlier})
     for result in results:

@@ -54,6 +54,7 @@ def plot_data(seq):
     axs[2].set_ylabel('Intensity')
 
     plt.tight_layout()
+    return fig
 
 
 def plot_method(method, x, y, metric=None):

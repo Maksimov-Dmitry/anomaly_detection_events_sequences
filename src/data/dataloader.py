@@ -125,8 +125,38 @@ def collate_fn(batch, multiple, diff_sample_size=100, regular=False, step=None):
     return output
 
 
-def get_cppod_dataloader(dataset: list, target: int, sample_multiplier: int):
-    set = CPPODDataset(dataset, target)
+class NonContextCPPODDataset(CPPODDataset):
+    def convert(self, seqs):
+        if seqs is None:
+            return None
+
+        def _convert(seq):
+            seq_id = seq.get('id')
+            start = seq['start']
+            stop = seq['stop']
+            time_t = seq['time_target']
+            mark_t = seq['mark_target']
+            assert np.all(time_t == np.sort(time_t))
+            assert len(time_t) == len(mark_t)
+            return {
+                'id': seq_id,
+                'time': time_t,
+                'mark': mark_t,
+                'start': start,
+                'stop': stop,
+                'time_test': seq.get('time_test'),
+                'label_test': seq.get('label_test'),
+                'lambda_x': seq.get('lambda_x'),
+                't_x': seq.get('t_x'),
+            }
+        return [_convert(seq) for seq in seqs]
+
+
+def get_cppod_dataloader(dataset: list, target: int, sample_multiplier: int, use_context: bool):
+    if use_context:
+        set = CPPODDataset(dataset, target)
+    else:
+        set = NonContextCPPODDataset(dataset, target)
     collate_fn_fixed = partial(
         collate_fn,
         multiple=sample_multiplier,
