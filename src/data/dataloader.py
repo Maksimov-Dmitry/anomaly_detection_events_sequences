@@ -5,6 +5,13 @@ from functools import partial
 
 
 class CPPODDataset(Dataset):
+    """
+    Dataset for handling CPPOD sequences with context and target.
+
+    Attributes:
+        dataset (list): Converted dataset with sequences.
+        target (int): The target mark to be considered.
+    """
     def __init__(self, dataset, target):
         self.target = target
         self.dataset = self.convert(dataset)
@@ -16,6 +23,15 @@ class CPPODDataset(Dataset):
         return self.dataset[idx]
 
     def convert(self, seqs):
+        """
+        Convert given sequences.
+
+        Args:
+            seqs (list): List of sequences to be converted.
+
+        Returns:
+            list: Converted list of sequences.
+        """
         if seqs is None:
             return None
         m_t = self.target + 1
@@ -68,6 +84,19 @@ class CPPODDataset(Dataset):
 
 
 def collate_fn(batch, multiple, diff_sample_size=100, regular=False, step=None):
+    """
+    Custom collate function for DataLoader.
+
+    Args:
+        batch (list): Batch data.
+        multiple (int): Sample multiplier.
+        diff_sample_size (int, optional): Size of sample for differences. Default is 100.
+        regular (bool, optional): Whether to use regular time intervals. Default is False.
+        step (float, optional): Time step for regular intervals. Default is None.
+
+    Returns:
+        list: Processed batch data.
+    """
     if batch is None:
         return None, None, None
     output = []
@@ -126,7 +155,19 @@ def collate_fn(batch, multiple, diff_sample_size=100, regular=False, step=None):
 
 
 class NonContextCPPODDataset(CPPODDataset):
+    """
+    Dataset for handling CPPOD sequences without context.
+    """
     def convert(self, seqs):
+        """
+        Convert given sequences without considering the context.
+
+        Args:
+            seqs (list): List of sequences to be converted.
+
+        Returns:
+            list: Converted list of sequences without context.
+        """
         if seqs is None:
             return None
 
@@ -153,6 +194,18 @@ class NonContextCPPODDataset(CPPODDataset):
 
 
 def get_cppod_dataloader(dataset: list, target: int, sample_multiplier: int, use_context: bool):
+    """
+    Get a DataLoader for the CPPOD dataset.
+
+    Args:
+        dataset (list): List of sequences.
+        target (int): Target mark to be considered.
+        sample_multiplier (int): Sample multiplier.
+        use_context (bool): Whether to use context or not.
+
+    Returns:
+        DataLoader: DataLoader object.
+    """
     if use_context:
         set = CPPODDataset(dataset, target)
     else:

@@ -4,6 +4,12 @@ import sklearn.metrics as metrics
 
 
 def plot_events(seq, title='Event Visualization'):
+    """Plots a visual representation of events in a sequence.
+
+    Args:
+        seq (dict): A dictionary containing the sequence of events.
+        title (str, optional): The title of the plot. Defaults to 'Event Visualization'.
+    """
     vt_event = seq['time_target']
     lambda_x = seq['lambda_x']
     t_x = seq['t_x']
@@ -36,6 +42,14 @@ def plot_events(seq, title='Event Visualization'):
 
 
 def plot_data(seq):
+    """Plots target events, context changes, and intensity of the Poisson Process over time.
+
+    Args:
+        seq (dict): A dictionary containing the sequence of events.
+
+    Returns:
+        matplotlib.figure.Figure: A Matplotlib figure object.
+    """
     fig, axs = plt.subplots(3, 1, figsize=(12, 12))
 
     axs[0].scatter(seq['time_target'], seq['mark_target'], color='red', alpha=0.6)
@@ -58,6 +72,14 @@ def plot_data(seq):
 
 
 def plot_method(method, x, y, metric=None):
+    """Plots the method curve on a graph.
+
+    Args:
+        method (dict): A dictionary containing information about the method.
+        x (array-like): The x-coordinates of the points on the curve.
+        y (array-like): The y-coordinates of the points on the curve.
+        metric (float, optional): An optional metric value to display. Defaults to None.
+    """
     name = method['name']
     if metric is None:
         label = name
@@ -67,6 +89,17 @@ def plot_method(method, x, y, metric=None):
 
 
 def plot_roc(label, score, method, plot=True):
+    """Plots the Receiver Operating Characteristic (ROC) curve and returns the Area Under Curve (AUC).
+
+    Args:
+        label (array-like): True binary labels.
+        score (array-like): Target scores.
+        method (dict): A dictionary containing information about the method.
+        plot (bool, optional): Whether to plot the ROC curve. Defaults to True.
+
+    Returns:
+        float: AUC score.
+    """
     fpr, tpr, _ = metrics.roc_curve(label, score)
     auc = metrics.roc_auc_score(label, score)
     if plot:

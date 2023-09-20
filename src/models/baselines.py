@@ -9,6 +9,15 @@ import argparse
 
 
 def detect_rand(test_set):
+    """
+    Creates random scores for test sequences.
+
+    Args:
+        test_set (list of dict): The test sequences data.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the results with random scores.
+    """
     result = []
     for seq_i, seq in enumerate(test_set):
         vt = seq['time_test']
@@ -26,6 +35,15 @@ def detect_rand(test_set):
 
 
 def fit_len(train_set):
+    """
+    Fits the length distribution of events in the training set.
+
+    Args:
+        train_set (list of dict): The training sequences data.
+
+    Returns:
+        ECDF: Empirical cumulative distribution function for lengths.
+    """
     lens = []
     for seq in train_set:
         vt = seq['time_target']
@@ -38,6 +56,16 @@ def fit_len(train_set):
 
 
 def detect_len(test_set, ecdf):
+    """
+    Detects scores based on lengths for test sequences.
+
+    Args:
+        test_set (list of dict): The test sequences data.
+        ecdf (ECDF): Empirical cumulative distribution function for lengths.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the scores based on lengths.
+    """
     result = []
     for seq_i, seq in enumerate(test_set):
         vt = seq['time_test']
@@ -59,6 +87,15 @@ def detect_len(test_set, ecdf):
 
 
 def detect_model_true(test_set):
+    """
+    Detects true scores based on the true model for test sequences.
+
+    Args:
+        test_set (list of dict): The test sequences data.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the true scores.
+    """
     result = []
     for seq_i, seq in enumerate(test_set):
         vt = seq['time_test']
@@ -85,6 +122,16 @@ def detect_model_true(test_set):
 
 
 def detect_model_pois(test_set, param):
+    """
+    Detects scores based on the Poisson model for test sequences.
+
+    Args:
+        test_set (list of dict): The test sequences data.
+        param (array): Parameters for the Poisson model.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the scores based on the Poisson model.
+    """
     result = []
     for seq_i, seq in enumerate(test_set):
         vt = seq['time_test']
@@ -120,6 +167,16 @@ def detect_model_pois(test_set, param):
 
 
 def fit_model_pois(train_set, n_mode):
+    """
+    Fits the Poisson model to the training sequences data.
+
+    Args:
+        train_set (list of dict): The training sequences data.
+        n_mode (int): The number of modes.
+
+    Returns:
+        array: Parameters for the Poisson model.
+    """
     data = [None] * n_mode
     for seq in train_set:
         vt_event = seq['time_target']
@@ -140,6 +197,16 @@ def fit_model_pois(train_set, n_mode):
 
 
 def detect_model_gam(test_set, param):
+    """
+    Detects scores based on the Gamma model for test sequences.
+
+    Args:
+        test_set (list of dict): The test sequences data.
+        param (array): Parameters for the Gamma model.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the scores based on the Gamma model.
+    """
     result = []
     for seq_i, seq in enumerate(test_set):
         vt_event = seq['time_target']
@@ -184,6 +251,16 @@ def detect_model_gam(test_set, param):
 
 
 def fit_model_gam(train_set, n_mode):
+    """
+    Fits the Gamma model to the training sequences data.
+
+    Args:
+        train_set (list of dict): The training sequences data.
+        n_mode (int): The number of modes.
+
+    Returns:
+        array: Parameters for the Gamma model.
+    """
     data = [None] * n_mode
     for seq in train_set:
         vt_event = seq['time_target']
@@ -206,6 +283,16 @@ def fit_model_gam(train_set, n_mode):
 
 
 def detect(name, method, test_set, result_path, p):
+    """
+    Detects scores using the given method and saves to a CSV file.
+
+    Args:
+        name (str): Name for the result.
+        method (function): Method to apply for detection.
+        test_set (list of dict): The test sequences data.
+        result_path (str): Path to save the results.
+        p (float): Parameter 'p' for the method.
+    """
     for outlier in outliers:
         np.random.seed(0)
         result = method(test_set[outlier][p])
@@ -213,6 +300,16 @@ def detect(name, method, test_set, result_path, p):
 
 
 def detect_with_param(method, param):
+    """
+    Creates a lambda function for detection with given method and parameters.
+
+    Args:
+        method (function): Method to apply for detection.
+        param (array): Parameters for the method.
+
+    Returns:
+        function: Lambda function for detection.
+    """
     return lambda x: method(x, param)
 
 
@@ -241,17 +338,11 @@ if __name__ == '__main__':
         param = fit_len(train_set)
         detect('len', detect_with_param(detect_len, param), test_set, result_path, args.p)
 
-
-        K = 2
         if dataset == 'pois':
-            # param = fit_model_pois(train_set, K)
-            # detect('model', detect_with_param(detect_model_pois, param), test_set, result_path)
             with open(f'{folder}/param.pkl', 'rb') as f:
                 param = pickle.load(f)
             detect('true', detect_with_param(detect_model_pois, param), test_set, result_path, args.p)
         elif dataset == 'gam':
-            # param = fit_model_gam(train_set, K)
-            # detect('model', detect_with_param(detect_model_gam, param), test_set, result_path)
             with open(f'{folder}/param.pkl', 'rb') as f:
                 param = pickle.load(f)
             detect('true', detect_with_param(detect_model_gam, param), test_set, result_path, args.p)

@@ -11,6 +11,11 @@ from src.visualization.visualize import plot_data
 
 
 def get_data_plot():
+    """Fetches and plots the initial training data.
+
+    Returns:
+        matplotlib.figure.Figure: A Matplotlib figure object for the plotted data.
+    """
     with open('data/raw/pois/train.pkl', 'rb') as f:
         data_train = pickle.load(f)
         fig = plot_data(data_train[0])
@@ -18,6 +23,11 @@ def get_data_plot():
 
 
 def main(params: MainParams):
+    """Runs the complete experiment pipeline, from data creation to model training and evaluation.
+
+    Args:
+        params (MainParams): A data class containing all the main parameters needed for the experiment.
+    """
     run = Run(experiment='main')
     run.add_tag('num-of-sequences-and-seed')
     run['hparams'] = asdict(params)

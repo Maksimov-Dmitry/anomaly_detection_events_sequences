@@ -4,6 +4,21 @@ import math
 
 
 class NSMMPP(nn.Module):
+    """
+    Neural Stochastic Modeling of Mixed Point Process (NSMMPP).
+
+    Attributes:
+        target (int): Target mark.
+        sigmoid (nn.Module): Sigmoid activation function.
+        tanh (nn.Module): Hyperbolic tangent activation function.
+        softplus (nn.Module): Softplus activation function.
+        label_size (int): Label size.
+        hidden_size (int): Hidden layer size.
+        num_eq (int): Number of equations.
+        Emb (nn.Parameter): Embedding tensor.
+        EmbPersonalised (nn.Parameter): Personalized embedding tensor, if applicable.
+        W, U, d, w, log_s (nn.Parameter): Model parameters.
+    """
     def __init__(self, label_size: int, hidden_size: int, target: int, number_of_persons):
         super(NSMMPP, self).__init__()
         self.target = target
@@ -22,7 +37,6 @@ class NSMMPP(nn.Module):
         self.d = nn.Parameter(torch.zeros(self.num_eq, hidden_size))
         self.w = nn.Parameter(self.init_weight(torch.empty(label_size, hidden_size)))
         self.log_s = nn.Parameter(torch.zeros(label_size))
-        self.debug = False
 
     def init_weight(self, w):
         stdv = 1. / math.sqrt(w.size()[-1])
@@ -33,7 +47,6 @@ class NSMMPP(nn.Module):
         s = torch.exp(self.log_s)
         return s * self.softplus(x / s)
 
-    # all zeros
     def init_hidden(self):
         c_t = torch.zeros(self.hidden_size)
         c_ = torch.zeros_like(c_t)
@@ -41,8 +54,20 @@ class NSMMPP(nn.Module):
         hidden = (c_t, h_t, c_, None, None, None)
         return hidden
 
-    # only compute hidden variables
     def forward_one_step(self, label_prev, label, t_prev, t, hidden):
+        """
+        Forward computation for one time step. Only compute hidden variables
+
+        Args:
+            label_prev (tensor): Previous label.
+            label (tensor): Current label.
+            t_prev (float): Previous time.
+            t (float): Current time.
+            hidden (tuple): Previous hidden states.
+
+        Returns:
+            tuple: Updated hidden states.
+        """
         c_t, h_t, c_, _, _, _ = hidden
         temp = self.W.matmul(label_prev) + self.U.matmul(h_t) + self.d
         i = self.sigmoid(temp[0, :])
@@ -60,13 +85,33 @@ class NSMMPP(nn.Module):
         return hidden
 
     def h_to_lambd(self, h):
+        """
+        Map hidden states to lambda (intensity function values).
+
+        Args:
+            h (tensor): Hidden state tensor.
+
+        Returns:
+            tensor: Lambda tensor.
+        """
         lambd_tilda = h.matmul(self.w.t())
         lambd = self.scaled_softplus(lambd_tilda)
         return lambd + 1e-9
 
-    # compute NLL loss given a label_seq and a time_seq
-    # sim_time_seq is simlulated times for computing integral
     def loglik(self, label_seq, time_seq, sim_time_seq, sim_time_idx, seq_id):
+        """
+        Compute negative log-likelihood. Sim_time_seq is simlulated times for computing integral.
+
+        Args:
+            label_seq (tensor): Label sequence.
+            time_seq (tensor): Time sequence.
+            sim_time_seq (tensor): Simulated time sequence.
+            sim_time_idx (tensor): Simulated time index.
+            seq_id (int): Sequence ID.
+
+        Returns:
+            tuple: Computed values including log-likelihood.
+        """
         n = len(time_seq)
         # collect states right after each event
         # last event is EOS marker
@@ -113,6 +158,22 @@ class NSMMPP(nn.Module):
         return result[0].sum()
 
     def detect_outlier(self, label_seq, time_seq, sim_time_seq, sim_time_idx, sim_time_diffs, time_test, id, n_sample):
+        """
+        Detect outliers using the trained model.
+
+        Args:
+            label_seq (tensor): Label sequence.
+            time_seq (tensor): Time sequence.
+            sim_time_seq (tensor): Simulated time sequence.
+            sim_time_idx (tensor): Simulated time index.
+            sim_time_diffs (tensor): Simulated time differences.
+            time_test (tensor): Test time sequence.
+            id (int): Sequence ID.
+            n_sample (int): Number of samples for Monte Carlo integration.
+
+        Returns:
+            tuple: Detection scores and other outputs.
+        """
         with torch.no_grad():
             _, all_c, all_c_, all_delta, all_o, all_h_t, h_sim = self.loglik(label_seq, time_seq, sim_time_seq, sim_time_idx, id)
             n = len(time_test)
@@ -153,6 +214,21 @@ class NSMMPP(nn.Module):
             return score, -score, lambd, lambd_sim
 
     def detect_outlier_instant(self, label_seq, time_seq, sim_time_seq, sim_time_idx, sim_time_diffs, time_test, id):
+        """
+        Detect outliers instantly.
+
+        Args:
+            label_seq (tensor): Label sequence.
+            time_seq (tensor): Time sequence.
+            sim_time_seq (tensor): Simulated time sequence.
+            sim_time_idx (tensor): Simulated time index.
+            sim_time_diffs (tensor): Simulated time differences.
+            time_test (tensor): Test time sequence.
+            id (int): Sequence ID.
+
+        Returns:
+            tuple: Detection scores and other outputs.
+        """
         with torch.no_grad():
             _, all_c, all_c_, all_delta, all_o, all_h_t, h_sim = self.loglik(label_seq, time_seq, sim_time_seq, sim_time_idx, id)
             n = len(time_test)

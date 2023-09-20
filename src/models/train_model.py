@@ -8,7 +8,6 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 import pytorch_lightning as pl
 from src.models.model_manager import ModelManager
 from src.data.make_dataset import split_train_val
-from aim.pytorch_lightning import AimLogger
 
 
 def train(params: TrainParams):
@@ -30,8 +29,8 @@ def train(params: TrainParams):
     early_stopping = EarlyStopping(monitor="val_loss", mode="min", patience=2)
     number_of_persons = params.n_persons if params.use_personalisation else None
     model = ModelManager(params.lr, params.label_size, params.nhid, params.target, number_of_persons)
-    trainer = pl.Trainer(max_time={"minutes": 15}, max_epochs=params.epochs, accelerator="cpu", devices=1, callbacks=[checkpoint_callback, early_stopping],
-                         log_every_n_steps=int(len(train_gen) / params.n_persons), logger=None)
+    trainer = pl.Trainer(max_time={"minutes": 15}, max_epochs=params.epochs, accelerator="cpu", devices=1, 
+                         callbacks=[checkpoint_callback, early_stopping], log_every_n_steps=int(len(train_gen) / params.n_persons), logger=None)
     trainer.fit(model, train_dataloaders=train_gen, val_dataloaders=val_gen)
 
 
