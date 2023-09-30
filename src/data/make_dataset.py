@@ -11,7 +11,16 @@ from collections import defaultdict
 
 
 def split_train_val(data, train_size):
-    # Step 1: Group the dictionaries by the 'id' key
+    """
+    Splits the given data into training and validation sets based on the 'id' key.
+
+    Args:
+        data (list of dict): The data to be split. Each dict should contain an 'id' key.
+        train_size (float): Proportion of data to use for training. Should be between 0 and 1.
+
+    Returns:
+        tuple: Two lists containing training and validation data, respectively.
+    """
     grouped_data = defaultdict(list)
     for d in data:
         grouped_data[d['id']].append(d)
@@ -30,6 +39,17 @@ def split_train_val(data, train_size):
 
 
 def merge(a, b, idx=None):
+    """
+    Merges two sorted lists into a single sorted list and optionally keeps track of the origin of each element.
+
+    Args:
+        a (list): First sorted list.
+        b (list): Second sorted list.
+        idx (list, optional): List to store the index representing the origin of each element.
+
+    Returns:
+        list: A sorted list containing all elements from both input lists.
+    """
     i = 0
     j = 0
     n = len(a)
@@ -58,6 +78,13 @@ def merge(a, b, idx=None):
 
 
 class MJPSim:
+    """
+    Base class for simulating Markov Jump Processes (MJP).
+
+    Attributes:
+        q (numpy.ndarray): Transition rate matrix.
+        param (any): Additional parameters specific to the type of MJP.
+    """
     def __init__(self, q, param):
         self.q = q
         self.param = param
@@ -111,6 +138,10 @@ class MJPSim:
 
 
 class PoisMJPSim(MJPSim):
+    """
+    Class for simulating Poisson MJP.
+    Inherits from MJPSim.
+    """
     def sim_target(self, lambda_, vt_z, vz, t_max, dt):
         t_x = np.arange(dt, t_max, dt)
         lambda_x = np.zeros_like(t_x)
@@ -214,6 +245,14 @@ class GamMJPSim(MJPSim):
 
 
 class OmissSim:
+    """
+    Class for simulating data with missing events (Omission).
+
+    Attributes:
+        w (float): Window size for generating test points.
+        rate_omiss (float): Omission rate.
+        regulator (function, optional): Function to modify the omission rate over time.
+    """
     def __init__(self, w, rate_omiss=0.1, regulator=None):
         # regulator is a function which changes the rate over time
         self.rate_omiss = rate_omiss
@@ -287,6 +326,14 @@ class OmissSim:
 
 
 class CommissSim:
+    """
+    Class for simulating data with commission errors.
+
+    Attributes:
+        rate (float): Rate of commission errors.
+        shrink (float): Factor to shrink the inter-event time. Defaults to 1.
+        regulator (function, optional): Function to modify the commission rate over time.
+    """
     def __init__(self, rate=0.1, shrink=1, regulator=None):
         self.rate = rate
         self.shrink = shrink
@@ -347,6 +394,15 @@ class CommissSim:
 
 
 def compute_empirical_rate(seqs):
+    """
+    Computes the empirical rate of events for a list of sequences.
+
+    Args:
+        seqs (list of dict): List of sequences. Each sequence is a dictionary containing 'start' and 'stop' keys.
+
+    Returns:
+        float: The computed empirical rate.
+    """
     t = 0
     n = 0
     for seq in seqs:
@@ -356,7 +412,20 @@ def compute_empirical_rate(seqs):
 
 
 def sim_data_test_omiss(data_train, data_test, p=0.1, seed=0, regulator=None, regulator_generator=None):
-    # generate test_omiss
+    """
+    Simulates test data with omission errors.
+
+    Args:
+        data_train (list of dict): Training data.
+        data_test (list of dict): Test data.
+        p (float): Omission probability.
+        seed (int): Random seed.
+        regulator (function, optional): Function to modify the omission rate.
+        regulator_generator (function, optional): Function to generate a new regulator function for each test.
+
+    Returns:
+        list of dict: Test data with omission errors.
+    """
     np.random.seed(seed)
     data_test_omiss = copy.deepcopy(data_test)
     n_test = len(data_test)
@@ -374,7 +443,19 @@ def sim_data_test_omiss(data_train, data_test, p=0.1, seed=0, regulator=None, re
 
 
 def sim_data_test_commiss(data_test, alpha=0.1, seed=0, regulator=None, regulator_generator=None):
-    # generate test_commiss
+    """
+    Simulates test data with commission errors.
+
+    Args:
+        data_test (list of dict): Test data.
+        alpha (float): Commission rate factor.
+        seed (int): Random seed.
+        regulator (function, optional): Function to modify the commission rate.
+        regulator_generator (function, optional): Function to generate a new regulator function for each test.
+
+    Returns:
+        list of dict: Test data with commission errors.
+    """
     np.random.seed(seed)
     data_test_commiss = copy.deepcopy(data_test)
     n_test = len(data_test)
@@ -392,6 +473,17 @@ def sim_data_test_commiss(data_test, alpha=0.1, seed=0, regulator=None, regulato
 
 
 def create_rand_pc_regulator(step, t_min, t_max):
+    """
+    Creates a random piecewise constant regulator function.
+
+    Args:
+        step (float): Step size for each piece.
+        t_min (float): Minimum time value.
+        t_max (float): Maximum time value.
+
+    Returns:
+        function: A piecewise constant regulator function.
+    """
     m = np.floor((t_max - t_min) / step).astype(int)
     p = np.random.uniform(size=m)
 
@@ -403,6 +495,15 @@ def create_rand_pc_regulator(step, t_min, t_max):
 
 
 def plot_events(seq):
+    """
+    Plots events and their intensity function.
+
+    Args:
+        seq (dict): A dictionary containing keys like 'time_target', 'lambda_x', 't_x', etc.
+
+    Returns:
+        None: This function only produces a plot.
+    """
     vt_event = seq['time_target']
     lambda_x = seq['lambda_x']
     t_x = seq['t_x']
@@ -428,6 +529,12 @@ def plot_events(seq):
 
 
 def create_dataset(dataset_params: DatasetParams):
+    """
+    Creates and saves synthetic datasets based on the given parameters.
+
+    Args:
+        dataset_params (DatasetParams): An object containing all the necessary parameters to create the dataset.
+    """
     folder = f'data/raw/{dataset_params.process}'
     os.makedirs(folder, exist_ok=True)
     Q = np.array([
@@ -466,28 +573,6 @@ def create_dataset(dataset_params: DatasetParams):
     data_test_commiss = sim_data_test_commiss(data_test, dataset_params.non_regulator_outliers_prob, dataset_params.seed)
     with open(f'{folder}/test_commiss_{dataset_params.non_regulator_outliers_prob}.pkl', 'wb') as f:
         pickle.dump(data_test_commiss, f)
-
-    # REGULATOR_SIN = lambda t: (1 + np.sin(2 * np.pi * t / 100)) / 2
-    # data_test_omiss = sim_data_test_omiss(data_train, data_test, dataset_params.sin_regulator_outliers_prob,
-    #                                       dataset_params.seed, regulator=REGULATOR_SIN)
-    # with open(f'{folder}/test_omiss_sin.pkl', 'wb') as f:
-    #     pickle.dump(data_test_omiss, f)
-    # data_test_commiss = sim_data_test_commiss(data_test, dataset_params.sin_regulator_outliers_prob,
-    #                                           dataset_params.seed, regulator=REGULATOR_SIN)
-    # with open(f'{folder}/test_commiss_sin.pkl', 'wb') as f:
-    #     pickle.dump(data_test_commiss, f)
-
-    # REGULATOR_GENERATOR = lambda: create_rand_pc_regulator(10, 0, dataset_params.t_max)
-
-    # data_test_omiss = sim_data_test_omiss(data_train, data_test, dataset_params.random_regulator_outliers_prob,
-    #                                       dataset_params.seed, regulator_generator=REGULATOR_GENERATOR)
-    # with open(f'{folder}/test_omiss_pc.pkl', 'wb') as f:
-    #     pickle.dump(data_test_omiss, f)
-
-    # data_test_commiss = sim_data_test_commiss(data_test, dataset_params.random_regulator_outliers_prob,
-    #                                           dataset_params.seed, regulator_generator=REGULATOR_GENERATOR)
-    # with open(f'{folder}/test_commiss_pc.pkl', 'wb') as f:
-    #     pickle.dump(data_test_commiss, f)
 
 
 @hydra.main(version_base=None, config_path="../../configs", config_name="dataset_config")

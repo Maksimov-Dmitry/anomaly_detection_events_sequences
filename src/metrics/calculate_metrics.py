@@ -24,7 +24,6 @@ method_dict = {
     },
 }
 methods = ['rand', 'CPPOD', 'len', 'true']
-# datasets = ['pois', 'gam']
 datasets = ['pois']
 outliers = ['commiss', 'omiss']
 curves = [
@@ -41,6 +40,16 @@ matplotlib.rcParams.update({'font.size': 6})
 
 
 def get_metrics(p):
+    """
+    Calculate and plot metrics such as ROC curve.
+
+    Args:
+        p (str): The value for parameter p.
+
+    Returns:
+        figures (list): List of figure objects.
+        results (list): List of metrics results.
+    """
     results = []
     figures = []
     for dataset in datasets:

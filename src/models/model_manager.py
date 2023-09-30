@@ -7,6 +7,15 @@ from tqdm import tqdm
 
 
 class ModelManager(pl.LightningModule):
+    """
+    Model Manager for handling the training and prediction of CPPOD models.
+
+    Attributes:
+        model (NSMMPP): Neural Stochastic Modeling of Mixed Point Process.
+        lr (float): Learning rate.
+        sim_time_diffs (tensor): Differences in simulation times, initially None.
+        dt (int): Time difference, default is 1.
+    """
     def __init__(self, lr: float, label_size: int, hidden_size: int, target: int, number_of_persons=None):
         super(ModelManager, self).__init__()
         self.model = NSMMPP(label_size, hidden_size, target, number_of_persons)
@@ -36,6 +45,16 @@ class ModelManager(pl.LightningModule):
         return self.step(batch, batch_idx, 'val_loss')
 
     def predict(self, dataloader, outliers_type):
+        """
+        Predict the outliers in the given dataloader.
+
+        Args:
+            dataloader (DataLoader): DataLoader object.
+            outliers_type (str): Type of outliers ('commiss' or 'omissions').
+
+        Returns:
+            DataFrame: Results in a DataFrame.
+        """
         results = []
         for seq_idx, batch in tqdm(enumerate(dataloader)):
             item = batch[0]
