@@ -72,6 +72,25 @@ This project aims to develop a personalized anomaly detection system using a Neu
 
 --------
 
+## Prerequisites
+
+- Python 3.10.11
+- Virtual environment (optional but recommended)
+
+## Configuration
+
+You can configure different parts of the project using the YAML files located under the `configs` directory.
+
+- `dataset_config.yaml`: control sythetic dataset generation
+- `main_config.yaml`:  parameters for the end-to-end pipeline, which is tracked by Aim
+- `predict_config.yaml`: control prediction on a trained model, including the model path(main parameter)
+- `train_config.yaml`: conrol model parameters and training process
+
+## Using Hydra and Aim
+
+- **Hydra**: https://hydra.cc/docs/intro/
+- **Aim**: https://aimstack.readthedocs.io/en/v3.17.5/
+
 ## Installation
 
 Install the required packages by running the following command:
@@ -122,6 +141,28 @@ To run the end-to-end pipeline with Aim experiment tracking, run:
 python main.py
 ```
 
-## Configuration
+### Custom parameters using Hydra
 
-You can configure different parts of the project using the YAML files located under the `configs` directory.
+You can override the default parameters using Hydra. For example, to change the number of hidden units, run:
+
+```bash
+python main.py nhid=128
+```
+
+### Aim
+
+You can see the results of the experiments using Aim. To run Aim, run:
+
+```bash
+aim up
+```
+
+## Reports and References
+
+### Reports
+For a comprehensive understanding of the methodologies, experiments, and results related to this project, refer to the detailed report available at:
+[REPORT.md](reports/REPORT.md)
+
+### References
+The development of this project involved the utilization of ideas and code from external sources. All sources have been acknowledged and credited in the references file available at:
+[REFERENCES.md](references/REFERENCES.md)
