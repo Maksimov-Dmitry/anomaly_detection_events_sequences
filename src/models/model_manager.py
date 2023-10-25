@@ -39,9 +39,29 @@ class ModelManager(pl.LightningModule):
         return loss
 
     def training_step(self, batch, batch_idx):
+        """
+        Perform a single training step.
+
+        Args:
+            batch (torch.Tensor): Batch of training data.
+            batch_idx (int): Index of the batch.
+
+        Returns:
+            torch.Tensor: Training loss value.
+        """
         return self.step(batch, batch_idx, 'train_loss')
 
     def validation_step(self, batch, batch_idx):
+        """
+        Perform a single validation step.
+
+        Args:
+            batch (torch.Tensor): Batch of validation data.
+            batch_idx (int): Index of the batch.
+
+        Returns:
+            torch.Tensor: Validation loss value.
+        """
         return self.step(batch, batch_idx, 'val_loss')
 
     def predict(self, dataloader, outliers_type):

@@ -32,7 +32,7 @@ class DatasetParams:
                                                  function is generated from a uniform distribution, ranging
                                                  from `context_intensity_pois_min` to
                                                  `context_intensity_pois_min * context_intensity_pois_factors`.
-             
+
         context_intensity_pois_factors (List[int]): List of factors to determine the upper bound for
                                                     `context_intensity_pois_min` when creating the cumulative
                                                     intensity function.
