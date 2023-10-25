@@ -6,6 +6,18 @@ This report provides insights into the Personalized Anomaly Detection project, w
 
 In the context of this project, the anomalies we are seeking to detect are categorized as either commissions or omissions.
 
+## Real-World Application
+Imagine a dataset that captures the frequency of rapid heartbeats experienced by patients, measured as average occurrences per hour. Additional features in our dataset include whether a patient is under 40 years of age, the time of day (day or night), and an activity marker indicating if the patient is running at the time of measurement. The dataset can look like this:
+| id | <40 | is_day | is_running | Frequency of Rapid Heartbeats|
+|----|-----|--------|------------|------------------------------|
+| 1  | Yes | Yes    | No         | 5                            |
+| 1  | Yes | No     | Yes        | 8                            |
+| 2  | No  | Yes    | Yes        | 12                           |
+| 2  | No  | No     | No         | 4                            |
+| 3  | Yes | Yes    | Yes        | 15                           |
+| 3  | Yes | No     | Yes        | 10                           |
+
+
 ### Inhomogeneous Poisson Process
 Example of an Inhomogeneous Poisson process:
 ![Inhomogeneous Poisson Process](figures/example_ipp.png)
@@ -39,12 +51,15 @@ The generation of data involves multiple steps to create a realistic representat
 
 1. **CIF Sampling**: For each person, CIF is sampled from a uniform distribution, establishing a foundational intensity function for event occurrence.
 2. **Context State Changes**: The changes in the context state, \( x \), are driven by a continuous-time Markov chain, with the transitions determined by a transition matrix, \( Q \).
+**Example**: Consider the case of Person 2 from our dataset. We observe that this individual sometimes has a Frequency of Rapid Heartbeats recorded as 12, while at other times, it's 4. If during a clinic visit, the Frequency of Rapid Heartbeats for Person 2 is measured as 13, whether or not this is considered an anomaly depends on the context. If this reading of 13 was taken while the patient was running, it aligns with the pattern we've observed (i.e., higher frequency when running) and is thus not an anomaly. On the other hand, if this reading was taken during a period of calm, without any physical activity, it would indeed be considered anomalous. This concept underscores the importance of context in our anomaly detection mechanism.
 3. **Event Generation**: Given the context state, \( x \), and the corresponding CIF, events are generated. This forms the data used for training the model.
 4. **Outlier Introduction**: Based on predefined probabilities, some events in the testing data are either deleted, to simulate omission outliers, or added, to represent commission outliers.
 
 ### Original Data
 The original data is derived from an inhomogeneous Poisson process, characterized by two distinct contexts that influence the cumulative intensity function. The data is visualized in the figure below.
 ![Original Data](figures/original_data.png)
+
+Here we can see 2 different context which impact on CIL. In our example, first context with CIL = 0.9 can be running, and second context with CIL = 0.1 can be calm.
 
 ### Input Data without Context
 In this project, two types of input data are considered. The first type is without context, meaning the model receives information solely based on the event sequence without any additional contextual information. This approach is visualized in the figure below.
@@ -64,7 +79,7 @@ The structure of the model is designed to incorporate multiple aspects of the in
 The input sequence serves as the foundational layer of the model, providing the basic temporal event information that the model will process and learn from.
 
 ### Embeddings
-1. **Person Embeddings**: These embeddings allow for the personalization of the model by incorporating individual-specific information, enabling the model to adapt and learn the unique patterns and characteristics of each individual's temporal sequences.
+1. **Person Embeddings**: These embeddings allow for the personalization of the model by incorporating individual-specific information, enabling the model to adapt and learn the unique patterns and characteristics of each individual's temporal sequences. While training phase, the model learns these embeddings, and during the prediction phase, the model uses these embeddings to predict the CIF. However, if the person is not present in the training data, the model will not be able to provide accurate result for this person on the prediction phase.
 2. **Context Embeddings**: These embeddings provide the model with additional contextual information, allowing it to learn and adapt to the different contextual states that can influence the event sequences.
 
 ### Model Visualization

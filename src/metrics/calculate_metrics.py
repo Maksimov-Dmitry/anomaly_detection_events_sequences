@@ -77,7 +77,7 @@ def get_metrics(p):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Your script description.')
+    parser = argparse.ArgumentParser(description='Calculate metrics for CPPOD.')
     parser.add_argument('--p', type=str, default="0.1", help='Value for p. Default is "0.1".')
     args = parser.parse_args()
     figures, results = get_metrics(args.p)

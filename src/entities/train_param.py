@@ -9,6 +9,7 @@ class TrainParams:
     nhid: int
     lr: float
     epochs: int
+    early_stepping_delta: float
     sample_multiplier: int
     target: int
     label_size: int

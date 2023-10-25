@@ -23,10 +23,19 @@ def get_data_plot():
 
 
 def main(params: MainParams):
-    """Runs the complete experiment pipeline, from data creation to model training and evaluation.
+    """
+    Runs the end-to-end experiment pipeline.
+
+    This includes steps for data creation, model training, prediction, and evaluation.
+    Steps:
+    1. Initialize experiment tracking with Aim.
+    2. Generate the dataset.
+    3. Train the model.
+    4. Run predictions on the trained model.
+    5. Calculate and track metrics.
 
     Args:
-        params (MainParams): A data class containing all the main parameters needed for the experiment.
+        params (MainParams): Parameters for the experiment.
     """
     run = Run(experiment='main')
     run.add_tag('num-of-sequences-and-seed')

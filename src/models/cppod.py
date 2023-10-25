@@ -7,18 +7,28 @@ class NSMMPP(nn.Module):
     """
     Neural Stochastic Modeling of Mixed Point Process (NSMMPP).
 
+    This model utilizes, embedding layers for events or contexts and personalisation and a series of equations for temporal point processes.
+    It leverages different activations in the transformation and update of hidden states. Intensity functions are derived from hidden states.
+
     Attributes:
-        target (int): Target mark.
-        sigmoid (nn.Module): Sigmoid activation function.
-        tanh (nn.Module): Hyperbolic tangent activation function.
-        softplus (nn.Module): Softplus activation function.
-        label_size (int): Label size.
-        hidden_size (int): Hidden layer size.
-        num_eq (int): Number of equations.
-        Emb (nn.Parameter): Embedding tensor.
-        EmbPersonalised (nn.Parameter): Personalized embedding tensor, if applicable.
-        W, U, d, w, log_s (nn.Parameter): Model parameters.
+        target (int): Specific event type or mark of interest.
+        sigmoid (nn.Module): Sigmoid activation function for neural transformations.
+        tanh (nn.Module): Hyperbolic tangent activation function for neural transformations.
+        softplus (nn.Module): Softplus activation function to achieve a smooth approximation of ReLU.
+        label_size (int): Total number of unique event labels or contexts.
+        hidden_size (int): Dimensionality of hidden states in the model.
+        num_eq (int): Total number of equations used in the model.
+        Emb (nn.Parameter): Tensor representing the general embeddings for different event labels.
+        EmbPersonalised (nn.Parameter): Embedding tensor personalized for specific entities or users.
+        W, U, d, w, log_s (nn.Parameter): Parameters corresponding to the weights, biases, and scaling factors in the equations.
+
+    Methods:
+        forward_one_step: Compute the hidden states for a single time step given previous states and event information.
+        h_to_lambd: Maps the computed hidden states to corresponding intensity values.
+        loglik: Calculates the negative log-likelihood of given sequences of events and times.
+        forward: Main forward pass for a given sequence of events.
     """
+
     def __init__(self, label_size: int, hidden_size: int, target: int, number_of_persons):
         super(NSMMPP, self).__init__()
         self.target = target

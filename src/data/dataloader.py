@@ -24,7 +24,8 @@ class CPPODDataset(Dataset):
 
     def convert(self, seqs):
         """
-        Convert given sequences.
+        Converts the given sequences, represented by a list of dictionaries,
+        to a format suitable for the Neural Model. For example, it inserts context into the input.
 
         Args:
             seqs (list): List of sequences to be converted.
@@ -37,6 +38,28 @@ class CPPODDataset(Dataset):
         m_t = self.target + 1
 
         def _convert(seq):
+            """
+            Converts a single sequence by merging context and target temporal points.
+
+            The function handles both 'time_context' and 'time_target' to create a union
+            temporal sequence with corresponding marks. The merging process respects
+            the temporal order, assigning new marks to the context events.
+
+            Args:
+                seq (dict): A sequence represented as a dictionary with keys:
+                            - 'id': identifier of the sequence
+                            - 'time_context': list of context timestamps
+                            - 'mark_context': list of context marks
+                            - 'start': start time of the sequence
+                            - 'stop': stop time of the sequence
+                            - 'time_target': list of target timestamps
+                            - 'mark_target': list of target marks
+                            - other optional keys like 'time_test', 'label_test', 'lambda_x', and 't_x'
+
+            Returns:
+                dict: A converted sequence dictionary with unified 'time' and 'mark' lists
+                    and the same auxiliary information as in the input.
+            """
             seq_id = seq.get('id')
             time_c = seq['time_context']
             mark_c = seq['mark_context']
@@ -101,6 +124,7 @@ def collate_fn(batch, multiple, diff_sample_size=100, regular=False, step=None):
         return None, None, None
     output = []
     for seq in batch:
+        # Create tensor of label sequence by adding 0s at the start and end, it will represent BoS and EoS.
         label_seq = torch.tensor(
             np.concatenate(([0], seq['mark'], [0])),
             dtype=torch.long,
@@ -112,6 +136,11 @@ def collate_fn(batch, multiple, diff_sample_size=100, regular=False, step=None):
         n = len(time_seq)
         t0 = seq['start']
         tn = seq['stop']
+
+        # Additional points are generated for Monte Carlo integration. These points
+        # will be used in the loglik (log likelihood) function to compute an integral.
+        # If 'regular' is set to True, the points are generated at regular intervals.
+        # Otherwise, they will be sampled differently (as specified in the subsequent code).
         if regular:
             sim_time_seq = torch.arange(t0, tn, step)
             sim_time_idx = torch.zeros_like(sim_time_seq, dtype=torch.long)

@@ -3,6 +3,7 @@ use_context: true
 nhid: 512
 lr: 0.001
 epochs: 15
+early_stepping_delta: 0.0
 sample_multiplier: 10
 target: 1
 label_size: 3

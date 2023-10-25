@@ -26,7 +26,7 @@ def train(params: TrainParams):
         verbose=True,
         save_last=False,
     )
-    early_stopping = EarlyStopping(monitor="val_loss", mode="min", patience=2)
+    early_stopping = EarlyStopping(monitor="val_loss", mode="min", patience=2, min_delta=params.early_stepping_delta)
     number_of_persons = params.n_persons if params.use_personalisation else None
     model = ModelManager(params.lr, params.label_size, params.nhid, params.target, number_of_persons)
     trainer = pl.Trainer(max_time={"minutes": 15}, max_epochs=params.epochs, accelerator="cpu", devices=1, 

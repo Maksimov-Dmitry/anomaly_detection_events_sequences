@@ -316,7 +316,7 @@ def detect_with_param(method, param):
 if __name__ == '__main__':
     datasets = ['pois']
     outliers = ['commiss', 'omiss']
-    parser = argparse.ArgumentParser(description='Your script description.')
+    parser = argparse.ArgumentParser(description='Detect outliers using baselines methods.')
     parser.add_argument('--p', type=str, default="0.1", help='Value for p. Default is "0.1".')
     args = parser.parse_args()
 

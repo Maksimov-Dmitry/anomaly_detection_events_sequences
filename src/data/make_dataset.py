@@ -104,11 +104,26 @@ class MJPSim:
         }
 
     def sim_mjp(self, t_max):
+        """
+        Simulates the trajectory of a Markov Jump Process (MJP) up to a given time t_max.
+
+        Args:
+            t_max (float): The maximum time up to which the MJP should be simulated.
+
+        Returns:
+            tuple: Two numpy arrays:
+                - vt_z (numpy.array): The times at which the process transitions.
+                - vz (numpy.array): The states of the process at the times in vt_z.
+        """
         q = self.q
         m = q.shape[0]
         assert (np.all(np.sum(q, axis=1) == 0))
         states = np.arange(0, m)
+
+        # Extract the diagonal (holding times) of the transition rate matrix
         stay = np.diag(q)
+
+        # Extract the transition probabilities from the rate matrix
         trans = q.copy()
         np.fill_diagonal(trans, 0)
         trans = trans / np.sum(trans, axis=1)
@@ -117,11 +132,14 @@ class MJPSim:
         s = 0
         t = 0
         while True:
+            # Sample the time until the next jump based on the current state's holding time
             t += np.random.exponential(-1 / stay[s])
+            # If the next jump happens before t_max, update the state and record the time and state
             if t <= t_max:
                 s = np.random.choice(states, p=trans[s, :])
                 vt_z.append(t)
                 vz.append(s)
+            # If the next jump happens after t_max, stop simulating
             else:
                 break
         return np.array(vt_z), np.array(vz, dtype=np.int32)
@@ -161,86 +179,6 @@ class PoisMJPSim(MJPSim):
                     break
             t = t_l
         vt_event = np.array(vt_event)
-        return vt_event, lambda_x, t_x
-
-
-class PoisSinMJPSim(MJPSim):
-    def sim_target(self, param, vt_z, vz, t_max, dt):
-        t_x = np.arange(dt, t_max, dt)
-        lambda_x = np.zeros_like(t_x)
-        t = 0
-        vt_event = []
-        vt_z = np.append(vt_z, t_max)
-        for k in range(len(vt_z) - 1):
-            t_l = vt_z[k + 1]
-            idx = (t_x > t) & (t_x <= t_l)
-            lambda_t = lambda t: param[vz[k]] * (1 + np.sin(t))
-            lambda_x[idx] = lambda_t(t_x[idx])
-            lambda_max = param[vz[k]]
-            while True:
-                t = self.sim_next(lambda_t, lambda_max, t, t_l)
-                if t <= t_l:
-                    vt_event.append(t)
-                else:
-                    break
-            t = t_l
-        vt_event = np.array(vt_event)
-        return vt_event, lambda_x, t_x
-
-
-class GamMJPSim(MJPSim):
-    def sim_target(self, param, vt_z, vz, t_max, dt):
-        t_x = np.arange(dt, t_max, dt)
-        lambda_x = np.zeros_like(t_x)
-        t = 0
-        t_prev = 0
-        vt_event = []
-        vt_z = np.append(vt_z, t_max)
-        lambda_event = []
-        for k in range(len(vt_z) - 1):
-            a = param[vz[k], 0]
-            b = 1 / param[vz[k], 1]
-            step = a * b
-            if vt_z[k + 1] - t - step < 10 * dt:
-                t_l = vt_z[k + 1]
-            else:
-                t_l = t + step
-            while True:
-                idx = (t_x > t) & (t_x <= t_l)
-
-                def lambda_t(t):
-                    return stats.gamma.pdf(t - t_prev, a, scale=b) / stats.gamma.sf(t - t_prev, a, scale=b)
-
-                lambda_x[idx] = lambda_t(t_x[idx])
-                if a >= 1:
-                    lambda_max = lambda_t(t_l)
-                else:
-                    lambda_max = lambda_t(t)
-                assert (lambda_max < np.inf)
-                if lambda_max == 0:  # avoid overflow in exponential
-                    t = t_l + 1
-                else:
-                    t = self.sim_next(lambda_t, lambda_max, t, t_l)
-                if t <= t_l:
-                    vt_event.append(t)
-                    lambda_event.append(lambda_t(t))
-                    t_prev = t
-                elif t_l >= vt_z[k + 1]:
-                    break
-                else:
-                    t = t_l
-                    if vt_z[k + 1] - t - step < 10 * dt:
-                        t_l = vt_z[k + 1]
-                    else:
-                        t_l = t + step
-            t = t_l
-        vt_event = np.array(vt_event)
-        lambda_event = np.array(lambda_event)
-        t_x = np.concatenate((t_x, vt_event))
-        lambda_x = np.concatenate((lambda_x, lambda_event))
-        idx = np.argsort(t_x)
-        t_x = t_x[idx]
-        lambda_x = lambda_x[idx]
         return vt_event, lambda_x, t_x
 
 
